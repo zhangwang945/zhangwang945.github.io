@@ -423,6 +423,16 @@
 
           
           
+            <span id="/2019/07/07/jquery/Deferred/" class="post-meta-item leancloud_visitors" data-flag-title="Deferred源码分析">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读次数：</span>
+              
+                <span class="leancloud-visitors-count"></span>
+            </span>
+          
 
           
 
@@ -604,6 +614,16 @@
           
 
           
+          
+            <span id="/2019/07/07/jquery/Callbacks/" class="post-meta-item leancloud_visitors" data-flag-title="Callbacks源码分析">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读次数：</span>
+              
+                <span class="leancloud-visitors-count"></span>
+            </span>
           
 
           
@@ -809,6 +829,16 @@
 
           
           
+            <span id="/2019/07/04/正则表达式高级应用/" class="post-meta-item leancloud_visitors" data-flag-title="正则表达式高级应用">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读次数：</span>
+              
+                <span class="leancloud-visitors-count"></span>
+            </span>
+          
 
           
 
@@ -966,6 +996,16 @@
           
 
           
+          
+            <span id="/2019/07/04/vue源码分析/" class="post-meta-item leancloud_visitors" data-flag-title="vue源码分析">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读次数：</span>
+              
+                <span class="leancloud-visitors-count"></span>
+            </span>
           
 
           
@@ -1150,6 +1190,16 @@
 
           
           
+            <span id="/2019/07/04/jquery/jquery/" class="post-meta-item leancloud_visitors" data-flag-title="jquery源码分析">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读次数：</span>
+              
+                <span class="leancloud-visitors-count"></span>
+            </span>
+          
 
           
 
@@ -1307,6 +1357,16 @@
           
 
           
+          
+            <span id="/2019/07/04/test/" class="post-meta-item leancloud_visitors" data-flag-title="test">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读次数：</span>
+              
+                <span class="leancloud-visitors-count"></span>
+            </span>
           
 
           
@@ -1490,6 +1550,16 @@
           
 
           
+          
+            <span id="/2018/07/03/hello-world/" class="post-meta-item leancloud_visitors" data-flag-title="hexo基本命令">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读次数：</span>
+              
+                <span class="leancloud-visitors-count"></span>
+            </span>
           
 
           
@@ -1850,7 +1920,7 @@
     notify: false,
     appId: 'z7CKEWDK3P5IEepm9B2c3XND-gzGzoHsz',
     appKey: '8F3D6isn3zxP3INnaasakgkv',
-    placeholder: 'Just go go',
+    placeholder: '来都来了，不撩一句嘛~，留言记得在上面留下【邮箱】，方便收到回复通知~',
     avatar: 'mm',
     meta: guest,
     pageSize: '15' || 10,
@@ -1869,6 +1939,74 @@
 
 
   
+  
+  <script>
+    
+    function showTime(Counter) {
+      var entries = [];
+      var $visitors = $('.leancloud_visitors');
+
+      $visitors.each(function() {
+        entries.push( $(this).attr('id').trim() );
+      });
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url: { '$in': entries } }) })
+        .done(function({ results }) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.url;
+            var time = item.time;
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for (var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if (countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function ({ responseJSON }) {
+          console.log('LeanCloud Counter Error: ' + responseJSON.code + ' ' + responseJSON.error);
+        });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + 'z7CKEWDK3P5IEepm9B2c3XND-gzGzoHsz')
+        .done(function({ api_server }) {
+          var Counter = function(method, url, data) {
+            return $.ajax({
+              method: method,
+              url: 'https://' + api_server + '/1.1' + url,
+              headers: {
+                'X-LC-Id': 'z7CKEWDK3P5IEepm9B2c3XND-gzGzoHsz',
+                'X-LC-Key': '8F3D6isn3zxP3INnaasakgkv',
+                'Content-Type': 'application/json',
+              },
+              data: data
+            });
+          };
+          
+            if ($('.post-title-link').length >= 1) {
+              showTime(Counter);
+            }
+          
+        });
+    });
+  </script>
+
+
 
   
 
