@@ -322,213 +322,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/07/07/jquery/Callbacks/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="张生旺">
-      <meta itemprop="description" content="前端技术分享">
-      <meta itemprop="image" content="https://t1.picb.cc/uploads/2019/07/04/g48Kc1.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="雨后的天空">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/07/07/jquery/Callbacks/" class="post-title-link" itemprop="url">Callbacks源码分析</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-
-          
-          
-          
-
-          
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2019-07-07 16:12:48 / 修改时间：23:56:33" itemprop="dateCreated datePublished" datetime="2019-07-07T16:12:48+08:00">2019-07-07</time>
-            </span>
-          
-
-          
-            
-
-            
-          
-
-          
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/jquery/" itemprop="url" rel="index"><span itemprop="name">jquery</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          <br>
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jquery的Callbacks函数队列设计是很出彩的，实用场景非常广泛，我们通过其使用方法及源码学习其设计思想</span><br></pre></td></tr></table></figure>
-
-<h3 id="Callbacks的参数"><a href="#Callbacks的参数" class="headerlink" title="Callbacks的参数"></a>Callbacks的参数</h3><p>根据官方文档Callbacks的参数可能是一下其中的某一个或者多个组合:</p>
-<ul>
-<li>once               只会被fire一次</li>
-<li>memory             缓存最后一次fire的参数，再add回调函数时，内部将会直接进行fire并把缓存的值作为其参数 </li>
-<li>unique             同一个回调只允许被添加一次</li>
-<li>stopOnFalse        当回调函数返回值为false时停止执行后续回调</li>
-</ul>
-<h3 id="使用方法"><a href="#使用方法" class="headerlink" title="使用方法"></a>使用方法</h3><ol>
-<li>不传参数</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks()</span><br><span class="line">a.add(v=&gt;console.log(v))</span><br><span class="line">a.fire(1)  //=&gt; 1 </span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'second:'</span>+v))</span><br><span class="line">a.fire(2)  //=&gt; 2  second:3</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>once </li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks(<span class="string">'once'</span>)</span><br><span class="line">a.add(v=&gt;console.log(v))</span><br><span class="line">a.fire(1)  //=&gt; 1</span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'second:'</span>+v)) //不会被添加</span><br><span class="line">a.fire(2)  //只会被fire一次 之后将会失效</span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li>memory </li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks(<span class="string">'memory'</span>)</span><br><span class="line">a.add(v=&gt;console.log(v))</span><br><span class="line">a.fire(1)  //=&gt; 1</span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'second:'</span>+v)) //=&gt;second:2</span><br><span class="line">a.fire(2)  //2  second:3</span><br></pre></td></tr></table></figure>
-
-<ol start="4">
-<li>once memory </li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks(<span class="string">'once memory'</span>)</span><br><span class="line">a.add(v=&gt;console.log(v))</span><br><span class="line">a.fire(1)  //=&gt; 1</span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'second:'</span>+v)) //=&gt;second:2</span><br><span class="line">a.fire(2)  //fire无效</span><br></pre></td></tr></table></figure>
-
-<ol start="5">
-<li>unique  </li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks(<span class="string">'unique'</span>)</span><br><span class="line">var fn = v=&gt;console.log(v)</span><br><span class="line">a.add(fn)</span><br><span class="line">a.fire(1)  //=&gt; 1</span><br><span class="line">a.add(fn) //重复的无法添加</span><br><span class="line">a.fire(2)  //=&gt;2</span><br></pre></td></tr></table></figure>
-
-<ol start="6">
-<li>stopOnFalse </li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks(<span class="string">'stopOnFalse'</span>)</span><br><span class="line">a.add(v=&gt;&#123;</span><br><span class="line">    console.log(v)</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span></span><br><span class="line">&#125;)</span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'second:'</span>+v))</span><br><span class="line">a.fire(2)  //=&gt;2</span><br></pre></td></tr></table></figure>
-
-<ol start="7">
-<li>stopOnFalse memory</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks(<span class="string">'stopOnFalse memory'</span>)</span><br><span class="line">a.add(v=&gt;&#123;</span><br><span class="line">    console.log(v)</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span></span><br><span class="line">&#125;)</span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'second:'</span>+v))</span><br><span class="line">a.fire(1)  //=&gt;1</span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'third:'</span>+v)) //add时也不会立即执行</span><br></pre></td></tr></table></figure>
-
-<h3 id="Callbacks源码分析"><a href="#Callbacks源码分析" class="headerlink" title="Callbacks源码分析"></a>Callbacks源码分析</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br></pre></td><td class="code"><pre><span class="line">/*</span><br><span class="line">     * Create a callback list using the following parameters:</span><br><span class="line">     *</span><br><span class="line">     *	options: an optional list of space-separated options that will change how</span><br><span class="line">     *			the callback list behaves or a more traditional option object</span><br><span class="line">     *</span><br><span class="line">     * By default a callback list will act like an event callback list and can be</span><br><span class="line">     * <span class="string">"fired"</span> multiple <span class="built_in">times</span>.</span><br><span class="line">     *</span><br><span class="line">     * Possible options:</span><br><span class="line">     *</span><br><span class="line">     *	once:			will ensure the callback list can only be fired once (like a Deferred)</span><br><span class="line">     *                  只会被fire一次</span><br><span class="line">     *</span><br><span class="line">     *	memory:			will keep track of previous values and will call any callback added</span><br><span class="line">     *					after the list has been fired right away with the latest <span class="string">"memorized"</span></span><br><span class="line">     *					values (like a Deferred)</span><br><span class="line">     *                  fire之后再add的回调将会执行参数为最后一次fire时传的参数</span><br><span class="line">     * </span><br><span class="line">     *	unique:			will ensure a callback can only be added once (no duplicate <span class="keyword">in</span> the list)</span><br><span class="line">     *                  同一个回调只允许被添加一次</span><br><span class="line">     *                  </span><br><span class="line">     *	stopOnFalse:	interrupt callings when a callback returns <span class="literal">false</span></span><br><span class="line">     *                  当回调函数返回值为<span class="literal">false</span>时停止执行后续回调</span><br><span class="line">     */</span><br><span class="line">    jQuery.Callbacks = <span class="keyword">function</span> (options) &#123;</span><br><span class="line"></span><br><span class="line">        // Convert options from String-formatted to Object-formatted <span class="keyword">if</span> needed 解析参数 </span><br><span class="line">        // (we check <span class="keyword">in</span> cache first)</span><br><span class="line">        options = typeof options === <span class="string">"string"</span> ?</span><br><span class="line">            (optionsCache[options] || createOptions(options)) :</span><br><span class="line">            jQuery.extend(&#123;&#125;, options);</span><br><span class="line">        var // Last fire value (<span class="keyword">for</span> non-forgettable lists)记录最后一次fire的参数</span><br><span class="line">            memory,</span><br><span class="line">            // Flag to know <span class="keyword">if</span> list was already fired 是否fire过</span><br><span class="line">            fired,</span><br><span class="line">            // Flag to know <span class="keyword">if</span> list is currently firing  是否正在执行回调队列的函数(个人觉得暂无实际用处)</span><br><span class="line">            firing,</span><br><span class="line">            // First callback to fire (used internally by add and fireWith) 队列应该开始的索引位置</span><br><span class="line">            firingStart,</span><br><span class="line">            // End of the loop when firing</span><br><span class="line">            firingLength,</span><br><span class="line">            // Index of currently firing callback (modified by remove <span class="keyword">if</span> needed) 队列当前正在执行的函数的索引位置</span><br><span class="line">            firingIndex, </span><br><span class="line">            // Actual callback list</span><br><span class="line">            list = [],</span><br><span class="line">            // Stack of fire calls <span class="keyword">for</span> repeatable lists 其布尔值可以作为是否禁用的状态; 解决重复fired问题，但是看源码其该stack进行push时是依赖firing状态，感觉无用并不能解决死循环问题(如在add的回调函数中进行fire)</span><br><span class="line">            stack = !options.once &amp;&amp; [],</span><br><span class="line">            // Fire callbacks</span><br><span class="line">            fire = <span class="keyword">function</span> (data) &#123;</span><br><span class="line">                memory = options.memory &amp;&amp; data;</span><br><span class="line">                fired = <span class="literal">true</span>;</span><br><span class="line">                firingIndex = firingStart || 0;</span><br><span class="line">                firingStart = 0;</span><br><span class="line">                firingLength = list.length;</span><br><span class="line">                firing = <span class="literal">true</span>;</span><br><span class="line">                //遍历执行回调</span><br><span class="line">                <span class="keyword">for</span> (; list &amp;&amp; firingIndex &lt; firingLength; firingIndex++) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (list[firingIndex].apply(data[0], data[1]) === <span class="literal">false</span> &amp;&amp; options.stopOnFalse) &#123;</span><br><span class="line">                        memory = <span class="literal">false</span>; // To prevent further calls using add</span><br><span class="line">                        <span class="built_in">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                firing = <span class="literal">false</span>;</span><br><span class="line">                <span class="keyword">if</span> (list) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (stack) &#123;</span><br><span class="line">                        <span class="keyword">if</span> (stack.length) &#123;</span><br><span class="line">                            fire(stack.shift());</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (memory) &#123;</span><br><span class="line">                        //once momory模式时重置了list  因为上一次的list里的函数不会再调用，为了节省内存重新赋值空数组</span><br><span class="line">                        list = [];</span><br><span class="line">                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                        //once模式时 fire后将会禁用</span><br><span class="line">                        self.disable();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;,</span><br><span class="line">            // Actual Callbacks object</span><br><span class="line">            self = &#123;</span><br><span class="line">                // Add a callback or a collection of callbacks to the list</span><br><span class="line">                add: <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                    <span class="keyword">if</span> (list) &#123;</span><br><span class="line">                        // First, we save the current length </span><br><span class="line">                        var start = list.length;</span><br><span class="line">                        (<span class="keyword">function</span> add(args) &#123; //匿名函数自执行遍历参数</span><br><span class="line">                            jQuery.each(args, <span class="keyword">function</span> (_, arg) &#123;</span><br><span class="line">                                var <span class="built_in">type</span> = jQuery.type(arg);</span><br><span class="line">                                <span class="keyword">if</span> (<span class="built_in">type</span> === <span class="string">"function"</span>) &#123;</span><br><span class="line">                                    <span class="keyword">if</span> (!options.unique || !self.has(arg)) &#123;  //判断当前是否是unique模式，如果是判断该回调函数是否已经存在，存在将不再进行push</span><br><span class="line">                                        list.push(arg);</span><br><span class="line">                                    &#125;</span><br><span class="line">                                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (arg &amp;&amp; arg.length &amp;&amp; <span class="built_in">type</span> !== <span class="string">"string"</span>) &#123; //当为数组或伪数组时递归调用add</span><br><span class="line">                                    // Inspect recursively</span><br><span class="line">                                    add(arg);</span><br><span class="line">                                &#125;</span><br><span class="line">                            &#125;);</span><br><span class="line">                        &#125;)(arguments);</span><br><span class="line">                        // Do we need to add the callbacks to the</span><br><span class="line">                        // current firing batch?</span><br><span class="line">                        <span class="keyword">if</span> (firing) &#123;</span><br><span class="line">                            firingLength = list.length;</span><br><span class="line">                            // With memory, <span class="keyword">if</span> we<span class="string">'re not firing then</span></span><br><span class="line"><span class="string">                            // we should call right away  </span></span><br><span class="line"><span class="string">                        &#125; else if (memory) &#123;  // memory有值表明当前是memory模式并且fire过了，所以add时直接执行 并且队列执行的起始索引位置设为add前的队列的length</span></span><br><span class="line"><span class="string">                            firingStart = start;</span></span><br><span class="line"><span class="string">                            fire(memory);</span></span><br><span class="line"><span class="string">                        &#125;</span></span><br><span class="line"><span class="string">                    &#125;</span></span><br><span class="line"><span class="string">                    return this;</span></span><br><span class="line"><span class="string">                &#125;,</span></span><br><span class="line"><span class="string">                // Remove a callback from the list</span></span><br><span class="line"><span class="string">                remove: function () &#123;</span></span><br><span class="line"><span class="string">                    if (list) &#123;</span></span><br><span class="line"><span class="string">                        jQuery.each(arguments, function (_, arg) &#123;</span></span><br><span class="line"><span class="string">                            var index;</span></span><br><span class="line"><span class="string">                            while ((index = jQuery.inArray(arg, list, index)) &gt; -1) &#123;</span></span><br><span class="line"><span class="string">                                list.splice(index, 1);</span></span><br><span class="line"><span class="string">                                // Handle firing indexes</span></span><br><span class="line"><span class="string">                                if (firing) &#123;</span></span><br><span class="line"><span class="string">                                    if (index &lt;= firingLength) &#123;</span></span><br><span class="line"><span class="string">                                        firingLength--;</span></span><br><span class="line"><span class="string">                                    &#125;</span></span><br><span class="line"><span class="string">                                    if (index &lt;= firingIndex) &#123;</span></span><br><span class="line"><span class="string">                                        firingIndex--;</span></span><br><span class="line"><span class="string">                                    &#125;</span></span><br><span class="line"><span class="string">                                &#125;</span></span><br><span class="line"><span class="string">                            &#125;</span></span><br><span class="line"><span class="string">                        &#125;);</span></span><br><span class="line"><span class="string">                    &#125;</span></span><br><span class="line"><span class="string">                    return this;</span></span><br><span class="line"><span class="string">                &#125;,</span></span><br><span class="line"><span class="string">                // Check if a given callback is in the list.判断回调是否已经在list了</span></span><br><span class="line"><span class="string">                // If no argument is given, return whether or not list has callbacks attached.</span></span><br><span class="line"><span class="string">                has: function (fn) &#123;</span></span><br><span class="line"><span class="string">                    return fn ? jQuery.inArray(fn, list) &gt; -1 : !!(list &amp;&amp; list.length);</span></span><br><span class="line"><span class="string">                &#125;,</span></span><br><span class="line"><span class="string">                // Remove all callbacks from the list</span></span><br><span class="line"><span class="string">                empty: function () &#123;</span></span><br><span class="line"><span class="string">                    list = [];</span></span><br><span class="line"><span class="string">                    firingLength = 0;</span></span><br><span class="line"><span class="string">                    return this;</span></span><br><span class="line"><span class="string">                &#125;,</span></span><br><span class="line"><span class="string">                // Have the list do nothing anymore 使之禁用</span></span><br><span class="line"><span class="string">                disable: function () &#123;</span></span><br><span class="line"><span class="string">                    list = stack = memory = undefined;</span></span><br><span class="line"><span class="string">                    return this;</span></span><br><span class="line"><span class="string">                &#125;,</span></span><br><span class="line"><span class="string">                // Is it disabled?</span></span><br><span class="line"><span class="string">                disabled: function () &#123;</span></span><br><span class="line"><span class="string">                    return !list;</span></span><br><span class="line"><span class="string">                &#125;,</span></span><br><span class="line"><span class="string">                // Lock the list in its current state</span></span><br><span class="line"><span class="string">                lock: function () &#123;</span></span><br><span class="line"><span class="string">                    stack = undefined;</span></span><br><span class="line"><span class="string">                    if (!memory) &#123;</span></span><br><span class="line"><span class="string">                        self.disable();</span></span><br><span class="line"><span class="string">                    &#125;</span></span><br><span class="line"><span class="string">                    return this;</span></span><br><span class="line"><span class="string">                &#125;,</span></span><br><span class="line"><span class="string">                // Is it locked?</span></span><br><span class="line"><span class="string">                locked: function () &#123;</span></span><br><span class="line"><span class="string">                    return !stack;</span></span><br><span class="line"><span class="string">                &#125;,</span></span><br><span class="line"><span class="string">                // Call all callbacks with the given context and arguments指定上下文和参数</span></span><br><span class="line"><span class="string">                fireWith: function (context, args) &#123;</span></span><br><span class="line"><span class="string">                    if (list &amp;&amp; (!fired || stack)) &#123; //当未fire过或者stack的布尔值为true 如果stack为false表明要么是once模式，要么就lock了</span></span><br><span class="line"><span class="string">                        args = args || [];</span></span><br><span class="line"><span class="string">                        //args[0]为上下文,args[1]为参数</span></span><br><span class="line"><span class="string">                        args = [context, args.slice ? args.slice() : args];</span></span><br><span class="line"><span class="string">                        if (firing) &#123;</span></span><br><span class="line"><span class="string">                            stack.push(args);</span></span><br><span class="line"><span class="string">                        &#125; else &#123;</span></span><br><span class="line"><span class="string">                            fire(args);</span></span><br><span class="line"><span class="string">                        &#125;</span></span><br><span class="line"><span class="string">                    &#125;</span></span><br><span class="line"><span class="string">                    return this;</span></span><br><span class="line"><span class="string">                &#125;,</span></span><br><span class="line"><span class="string">                // Call all the callbacks with the given arguments</span></span><br><span class="line"><span class="string">                fire: function () &#123;</span></span><br><span class="line"><span class="string">                    self.fireWith(this, arguments);</span></span><br><span class="line"><span class="string">                    return this;</span></span><br><span class="line"><span class="string">                &#125;,</span></span><br><span class="line"><span class="string">                // To know if the callbacks have already been called at least once</span></span><br><span class="line"><span class="string">                fired: function () &#123;</span></span><br><span class="line"><span class="string">                    return !!fired;</span></span><br><span class="line"><span class="string">                &#125;</span></span><br><span class="line"><span class="string">            &#125;;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        return self;</span></span><br><span class="line"><span class="string">    &#125;;</span></span><br></pre></td></tr></table></figure>
-
-<p>###</p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/07/07/jquery/Deferred/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -644,6 +437,223 @@
         
           
             
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/07/07/jquery/Callbacks/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="张生旺">
+      <meta itemprop="description" content="前端技术分享">
+      <meta itemprop="image" content="https://t1.picb.cc/uploads/2019/07/04/g48Kc1.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="雨后的天空">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/07/07/jquery/Callbacks/" class="post-title-link" itemprop="url">Callbacks源码分析</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+
+          
+          
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-07-07 16:12:48" itemprop="dateCreated datePublished" datetime="2019-07-07T16:12:48+08:00">2019-07-07</time>
+            </span>
+          
+
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-07-08 11:15:40" itemprop="dateModified" datetime="2019-07-08T11:15:40+08:00">2019-07-08</time>
+              </span>
+            
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/jquery/" itemprop="url" rel="index"><span itemprop="name">jquery</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          <br>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jquery的Callbacks函数队列设计是很出彩的，实用场景非常广泛，我们通过其使用方法及源码学习其设计思想</span><br></pre></td></tr></table></figure>
+
+<h3 id="Callbacks的参数"><a href="#Callbacks的参数" class="headerlink" title="Callbacks的参数"></a>Callbacks的参数</h3><p>根据官方文档Callbacks的参数可能是一下其中的某一个或者多个组合:</p>
+<ul>
+<li>once               只会被fire一次</li>
+<li>memory             缓存最后一次fire的参数，再add回调函数时，内部将会直接进行fire并把缓存的值作为其参数 </li>
+<li>unique             同一个回调只允许被添加一次</li>
+<li>stopOnFalse        当回调函数返回值为false时停止执行后续回调</li>
+</ul>
+<h3 id="使用方法"><a href="#使用方法" class="headerlink" title="使用方法"></a>使用方法</h3><ol>
+<li>不传参数</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks()</span><br><span class="line">a.add(v=&gt;console.log(v))</span><br><span class="line">a.fire(1)  //=&gt; 1 </span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'second:'</span>+v))</span><br><span class="line">a.fire(2)  //=&gt; 2  second:3</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>once </li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks(<span class="string">'once'</span>)</span><br><span class="line">a.add(v=&gt;console.log(v))</span><br><span class="line">a.fire(1)  //=&gt; 1</span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'second:'</span>+v)) //不会被添加</span><br><span class="line">a.fire(2)  //只会被fire一次 之后将会失效</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>memory </li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks(<span class="string">'memory'</span>)</span><br><span class="line">a.add(v=&gt;console.log(v))</span><br><span class="line">a.fire(1)  //=&gt; 1</span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'second:'</span>+v)) //=&gt;second:2</span><br><span class="line">a.fire(2)  //2  second:3</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>once memory </li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks(<span class="string">'once memory'</span>)</span><br><span class="line">a.add(v=&gt;console.log(v))</span><br><span class="line">a.fire(1)  //=&gt; 1</span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'second:'</span>+v)) //=&gt;second:2</span><br><span class="line">a.fire(2)  //fire无效</span><br></pre></td></tr></table></figure>
+
+<ol start="5">
+<li>unique  </li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks(<span class="string">'unique'</span>)</span><br><span class="line">var fn = v=&gt;console.log(v)</span><br><span class="line">a.add(fn)</span><br><span class="line">a.fire(1)  //=&gt; 1</span><br><span class="line">a.add(fn) //重复的无法添加</span><br><span class="line">a.fire(2)  //=&gt;2</span><br></pre></td></tr></table></figure>
+
+<ol start="6">
+<li>stopOnFalse </li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks(<span class="string">'stopOnFalse'</span>)</span><br><span class="line">a.add(v=&gt;&#123;</span><br><span class="line">    console.log(v)</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span></span><br><span class="line">&#125;)</span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'second:'</span>+v))</span><br><span class="line">a.fire(2)  //=&gt;2</span><br></pre></td></tr></table></figure>
+
+<ol start="7">
+<li>stopOnFalse memory</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Callbacks(<span class="string">'stopOnFalse memory'</span>)</span><br><span class="line">a.add(v=&gt;&#123;</span><br><span class="line">    console.log(v)</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span></span><br><span class="line">&#125;)</span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'second:'</span>+v))</span><br><span class="line">a.fire(1)  //=&gt;1</span><br><span class="line">a.add(v=&gt;console.log(<span class="string">'third:'</span>+v)) //add时也不会立即执行</span><br></pre></td></tr></table></figure>
+
+<h3 id="Callbacks源码分析"><a href="#Callbacks源码分析" class="headerlink" title="Callbacks源码分析"></a>Callbacks源码分析</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br></pre></td><td class="code"><pre><span class="line">/*</span><br><span class="line">     * Create a callback list using the following parameters:</span><br><span class="line">     *</span><br><span class="line">     *	options: an optional list of space-separated options that will change how</span><br><span class="line">     *			the callback list behaves or a more traditional option object</span><br><span class="line">     *</span><br><span class="line">     * By default a callback list will act like an event callback list and can be</span><br><span class="line">     * <span class="string">"fired"</span> multiple <span class="built_in">times</span>.</span><br><span class="line">     *</span><br><span class="line">     * Possible options:</span><br><span class="line">     *</span><br><span class="line">     *	once:			will ensure the callback list can only be fired once (like a Deferred)</span><br><span class="line">     *                  只会被fire一次</span><br><span class="line">     *</span><br><span class="line">     *	memory:			will keep track of previous values and will call any callback added</span><br><span class="line">     *					after the list has been fired right away with the latest <span class="string">"memorized"</span></span><br><span class="line">     *					values (like a Deferred)</span><br><span class="line">     *                  fire之后再add的回调将会执行参数为最后一次fire时传的参数</span><br><span class="line">     * </span><br><span class="line">     *	unique:			will ensure a callback can only be added once (no duplicate <span class="keyword">in</span> the list)</span><br><span class="line">     *                  同一个回调只允许被添加一次</span><br><span class="line">     *                  </span><br><span class="line">     *	stopOnFalse:	interrupt callings when a callback returns <span class="literal">false</span></span><br><span class="line">     *                  当回调函数返回值为<span class="literal">false</span>时停止执行后续回调</span><br><span class="line">     */</span><br><span class="line">    jQuery.Callbacks = <span class="keyword">function</span> (options) &#123;</span><br><span class="line"></span><br><span class="line">        // Convert options from String-formatted to Object-formatted <span class="keyword">if</span> needed 解析参数 </span><br><span class="line">        // (we check <span class="keyword">in</span> cache first)</span><br><span class="line">        options = typeof options === <span class="string">"string"</span> ?</span><br><span class="line">            (optionsCache[options] || createOptions(options)) :</span><br><span class="line">            jQuery.extend(&#123;&#125;, options);</span><br><span class="line">        var // Last fire value (<span class="keyword">for</span> non-forgettable lists)记录最后一次fire的参数</span><br><span class="line">            memory,</span><br><span class="line">            // Flag to know <span class="keyword">if</span> list was already fired 是否fire过</span><br><span class="line">            fired,</span><br><span class="line">            // Flag to know <span class="keyword">if</span> list is currently firing  是否正在执行回调队列的函数(个人觉得暂无实际用处)</span><br><span class="line">            firing,</span><br><span class="line">            // First callback to fire (used internally by add and fireWith) 队列应该开始的索引位置</span><br><span class="line">            firingStart,</span><br><span class="line">            // End of the loop when firing</span><br><span class="line">            firingLength,</span><br><span class="line">            // Index of currently firing callback (modified by remove <span class="keyword">if</span> needed) 队列当前正在执行的函数的索引位置</span><br><span class="line">            firingIndex, </span><br><span class="line">            // Actual callback list</span><br><span class="line">            list = [],</span><br><span class="line">            // Stack of fire calls <span class="keyword">for</span> repeatable lists 其布尔值可以作为是否禁用的状态; 解决重复fired问题，但是看源码其该stack进行push时是依赖firing状态，感觉无用并不能解决死循环问题(如在add的回调函数中进行fire)</span><br><span class="line">            stack = !options.once &amp;&amp; [],</span><br><span class="line">            // Fire callbacks</span><br><span class="line">            fire = <span class="keyword">function</span> (data) &#123;</span><br><span class="line">                memory = options.memory &amp;&amp; data;</span><br><span class="line">                fired = <span class="literal">true</span>;</span><br><span class="line">                firingIndex = firingStart || 0;</span><br><span class="line">                firingStart = 0;</span><br><span class="line">                firingLength = list.length;</span><br><span class="line">                firing = <span class="literal">true</span>;</span><br><span class="line">                //遍历执行回调</span><br><span class="line">                <span class="keyword">for</span> (; list &amp;&amp; firingIndex &lt; firingLength; firingIndex++) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (list[firingIndex].apply(data[0], data[1]) === <span class="literal">false</span> &amp;&amp; options.stopOnFalse) &#123;</span><br><span class="line">                        memory = <span class="literal">false</span>; // To prevent further calls using add</span><br><span class="line">                        <span class="built_in">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                firing = <span class="literal">false</span>;</span><br><span class="line">                <span class="keyword">if</span> (list) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (stack) &#123;</span><br><span class="line">                        <span class="keyword">if</span> (stack.length) &#123;</span><br><span class="line">                            fire(stack.shift());</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (memory) &#123;</span><br><span class="line">                        //once momory模式时重置了list  因为上一次的list里的函数不会再调用，为了节省内存重新赋值空数组</span><br><span class="line">                        list = [];</span><br><span class="line">                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                        //once模式时 fire后将会禁用</span><br><span class="line">                        self.disable();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;,</span><br><span class="line">            // Actual Callbacks object</span><br><span class="line">            self = &#123;</span><br><span class="line">                // Add a callback or a collection of callbacks to the list</span><br><span class="line">                add: <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                    <span class="keyword">if</span> (list) &#123;</span><br><span class="line">                        // First, we save the current length </span><br><span class="line">                        var start = list.length;</span><br><span class="line">                        (<span class="keyword">function</span> add(args) &#123; //匿名函数自执行遍历参数</span><br><span class="line">                            jQuery.each(args, <span class="keyword">function</span> (_, arg) &#123;</span><br><span class="line">                                var <span class="built_in">type</span> = jQuery.type(arg);</span><br><span class="line">                                <span class="keyword">if</span> (<span class="built_in">type</span> === <span class="string">"function"</span>) &#123;</span><br><span class="line">                                    <span class="keyword">if</span> (!options.unique || !self.has(arg)) &#123;  //判断当前是否是unique模式，如果是判断该回调函数是否已经存在，存在将不再进行push</span><br><span class="line">                                        list.push(arg);</span><br><span class="line">                                    &#125;</span><br><span class="line">                                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (arg &amp;&amp; arg.length &amp;&amp; <span class="built_in">type</span> !== <span class="string">"string"</span>) &#123; //当为数组或伪数组时递归调用add</span><br><span class="line">                                    // Inspect recursively</span><br><span class="line">                                    add(arg);</span><br><span class="line">                                &#125;</span><br><span class="line">                            &#125;);</span><br><span class="line">                        &#125;)(arguments);</span><br><span class="line">                        // Do we need to add the callbacks to the</span><br><span class="line">                        // current firing batch?</span><br><span class="line">                        <span class="keyword">if</span> (firing) &#123;</span><br><span class="line">                            firingLength = list.length;</span><br><span class="line">                            // With memory, <span class="keyword">if</span> we are not firing <span class="keyword">then</span></span><br><span class="line">                            // we should call right away  </span><br><span class="line">                        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (memory) &#123;  // memory有值表明当前是memory模式并且fire过了，所以add时直接执行 并且队列执行的起始索引位置设为add前的队列的length</span><br><span class="line">                            firingStart = start;</span><br><span class="line">                            fire(memory);</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="built_in">return</span> this;</span><br><span class="line">                &#125;,</span><br><span class="line">                // Remove a callback from the list</span><br><span class="line">                remove: <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                    <span class="keyword">if</span> (list) &#123;</span><br><span class="line">                        jQuery.each(arguments, <span class="keyword">function</span> (_, arg) &#123;</span><br><span class="line">                            var index;</span><br><span class="line">                            <span class="keyword">while</span> ((index = jQuery.inArray(arg, list, index)) &gt; -1) &#123;</span><br><span class="line">                                list.splice(index, 1);</span><br><span class="line">                                // Handle firing indexes</span><br><span class="line">                                <span class="keyword">if</span> (firing) &#123;</span><br><span class="line">                                    <span class="keyword">if</span> (index &lt;= firingLength) &#123;</span><br><span class="line">                                        firingLength--;</span><br><span class="line">                                    &#125;</span><br><span class="line">                                    <span class="keyword">if</span> (index &lt;= firingIndex) &#123;</span><br><span class="line">                                        firingIndex--;</span><br><span class="line">                                    &#125;</span><br><span class="line">                                &#125;</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;);</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="built_in">return</span> this;</span><br><span class="line">                &#125;,</span><br><span class="line">                // Check <span class="keyword">if</span> a given callback is <span class="keyword">in</span> the list.判断回调是否已经在list了</span><br><span class="line">                // If no argument is given, <span class="built_in">return</span> whether or not list has callbacks attached.</span><br><span class="line">                has: <span class="keyword">function</span> (fn) &#123;</span><br><span class="line">                    <span class="built_in">return</span> fn ? jQuery.inArray(fn, list) &gt; -1 : !!(list &amp;&amp; list.length);</span><br><span class="line">                &#125;,</span><br><span class="line">                // Remove all callbacks from the list</span><br><span class="line">                empty: <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                    list = [];</span><br><span class="line">                    firingLength = 0;</span><br><span class="line">                    <span class="built_in">return</span> this;</span><br><span class="line">                &#125;,</span><br><span class="line">                // Have the list <span class="keyword">do</span> nothing anymore 使之禁用</span><br><span class="line">                <span class="built_in">disable</span>: <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                    list = stack = memory = undefined;</span><br><span class="line">                    <span class="built_in">return</span> this;</span><br><span class="line">                &#125;,</span><br><span class="line">                // Is it disabled?</span><br><span class="line">                disabled: <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                    <span class="built_in">return</span> !list;</span><br><span class="line">                &#125;,</span><br><span class="line">                // Lock the list <span class="keyword">in</span> its current state</span><br><span class="line">                lock: <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                    stack = undefined;</span><br><span class="line">                    <span class="keyword">if</span> (!memory) &#123;</span><br><span class="line">                        self.disable();</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="built_in">return</span> this;</span><br><span class="line">                &#125;,</span><br><span class="line">                // Is it locked?</span><br><span class="line">                locked: <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                    <span class="built_in">return</span> !stack;</span><br><span class="line">                &#125;,</span><br><span class="line">                // Call all callbacks with the given context and arguments指定上下文和参数</span><br><span class="line">                fireWith: <span class="keyword">function</span> (context, args) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (list &amp;&amp; (!fired || stack)) &#123; //当未fire过或者stack的布尔值为<span class="literal">true</span> 如果stack为<span class="literal">false</span>表明要么是once模式，要么就lock了</span><br><span class="line">                        args = args || [];</span><br><span class="line">                        //args[0]为上下文,args[1]为参数</span><br><span class="line">                        args = [context, args.slice ? args.slice() : args];</span><br><span class="line">                        <span class="keyword">if</span> (firing) &#123;</span><br><span class="line">                            stack.push(args);</span><br><span class="line">                        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                            fire(args);</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="built_in">return</span> this;</span><br><span class="line">                &#125;,</span><br><span class="line">                // Call all the callbacks with the given arguments</span><br><span class="line">                fire: <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                    self.fireWith(this, arguments);</span><br><span class="line">                    <span class="built_in">return</span> this;</span><br><span class="line">                &#125;,</span><br><span class="line">                // To know <span class="keyword">if</span> the callbacks have already been called at least once</span><br><span class="line">                fired: <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                    <span class="built_in">return</span> !!fired;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">return</span> self;</span><br><span class="line">    &#125;;</span><br></pre></td></tr></table></figure>
+
+<p>###</p>
+
           
         
       
