@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="目的jquery的Deffered是es6的promise前身，是良好的异步解决方案，通过其源码学习其设计思想 参数、返回值参数  ： function 可选返回值： deffered对象 使用方法1234var a = $.Deferred(v =&amp;gt; console.log(1)) //=&amp;gt;1a.done(v=&amp;gt;console.log(v)) //添加到resolvList中a">
+<meta name="keywords" content="jquery">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Deferred源码分析">
+<meta property="og:url" content="http://yoursite.com/2018/07/07/jquery/Deffered/index.html">
+<meta property="og:site_name" content="雨后的天空">
+<meta property="og:description" content="目的jquery的Deffered是es6的promise前身，是良好的异步解决方案，通过其源码学习其设计思想 参数、返回值参数  ： function 可选返回值： deffered对象 使用方法1234var a = $.Deferred(v =&amp;gt; console.log(1)) //=&amp;gt;1a.done(v=&amp;gt;console.log(v)) //添加到resolvList中a">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-07-09T08:26:12.991Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Deferred源码分析">
+<meta name="twitter:description" content="目的jquery的Deffered是es6的promise前身，是良好的异步解决方案，通过其源码学习其设计思想 参数、返回值参数  ： function 可选返回值： deffered对象 使用方法1234var a = $.Deferred(v =&amp;gt; console.log(1)) //=&amp;gt;1a.done(v=&amp;gt;console.log(v)) //添加到resolvList中a">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2018/07/07/jquery/Deffered/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Deferred源码分析 | 雨后的天空</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">雨后的天空</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">生活是一种态度</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/07/07/jquery/Deffered/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="张生旺">
+      <meta itemprop="description" content="前端技术分享">
+      <meta itemprop="image" content="https://t1.picb.cc/uploads/2019/07/04/g48Kc1.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="雨后的天空">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Deferred源码分析
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+
+          
+          
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-07-07 16:12:48" itemprop="dateCreated datePublished" datetime="2018-07-07T16:12:48+08:00">2018-07-07</time>
+            </span>
+          
+
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-07-09 16:26:12" itemprop="dateModified" datetime="2019-07-09T16:26:12+08:00">2019-07-09</time>
+              </span>
+            
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/jquery/" itemprop="url" rel="index"><span itemprop="name">jquery</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+              
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+            
+                <span class="post-meta-item-text">评论数：</span>
+                <a href="/2018/07/07/jquery/Deffered/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2018/07/07/jquery/Deffered/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+            <span id="/2018/07/07/jquery/Deffered/" class="post-meta-item leancloud_visitors" data-flag-title="Deferred源码分析">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读次数：</span>
+              
+                <span class="leancloud-visitors-count"></span>
+            </span>
+          
+
+          
+
+          <br>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><p>jquery的Deffered是es6的promise前身，是良好的异步解决方案，通过其源码学习其设计思想</p>
+<h3 id="参数、返回值"><a href="#参数、返回值" class="headerlink" title="参数、返回值"></a>参数、返回值</h3><p>参数  ： function 可选<br>返回值： deffered对象</p>
+<h3 id="使用方法"><a href="#使用方法" class="headerlink" title="使用方法"></a>使用方法</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var a = $.Deferred(v =&gt; console.log(1)) //=&gt;1</span><br><span class="line">a.done(v=&gt;console.log(v)) //添加到resolvList中</span><br><span class="line">a.resolve(2) //=&gt;2</span><br><span class="line">a.then(v=&gt;console.log(v,3)).<span class="keyword">then</span>(v=&gt;console.log(4)) //=&gt;2,3    4</span><br></pre></td></tr></table></figure>
+
+<h3 id="执行流程"><a href="#执行流程" class="headerlink" title="执行流程"></a>执行流程</h3><p>大致流程如下：</p>
+<ol>
+<li>初始化tuples以及每个状态对应的Callbacks队列、初始化promise</li>
+<li>为promise添加done fail progress方法(Callbacks的add)</li>
+<li>resolveList添加：状态更改函数、rejectedList的禁用函数、notifyList的锁定函数<br>rejectedList添加：状态更改函数、resolveList的禁用函数、notifyList的锁定函数</li>
+<li>deffer添加 resolve | reject | notify 方法 resolveWith |rejectWith | notifyWith 方法(就是Callbacks的firwith)</li>
+<li>deffer扩展promise的所有方法</li>
+<li>返回deffer</li>
+</ol>
+<p>难点:promise.then实现思路：<br>每次都会生成一个新的deffer，利用闭包，将新的deffer各状态的更新函数添加到老的deffer各状态的队列内，以此进行状态同步,返回的是promise对象(deffer.promise)</p>
+<h3 id="Deffered源码分析"><a href="#Deffered源码分析" class="headerlink" title="Deffered源码分析"></a>Deffered源码分析</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><span class="line">Deferred: <span class="keyword">function</span> (func) &#123;</span><br><span class="line">            var tuples = [</span><br><span class="line">                    // action, add listener, listener list, final state</span><br><span class="line">                    [<span class="string">"resolve"</span>, <span class="string">"done"</span>, jQuery.Callbacks(<span class="string">"once memory"</span>), <span class="string">"resolved"</span>],</span><br><span class="line">                    [<span class="string">"reject"</span>, <span class="string">"fail"</span>, jQuery.Callbacks(<span class="string">"once memory"</span>), <span class="string">"rejected"</span>],</span><br><span class="line">                    [<span class="string">"notify"</span>, <span class="string">"progress"</span>, jQuery.Callbacks(<span class="string">"memory"</span>)]</span><br><span class="line">                ],</span><br><span class="line">                state = <span class="string">"pending"</span>,</span><br><span class="line">                promise = &#123;</span><br><span class="line">                    state: <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                        <span class="built_in">return</span> state;</span><br><span class="line">                    &#125;,</span><br><span class="line">                    always: <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                        deferred.done(arguments).fail(arguments);</span><br><span class="line">                        <span class="built_in">return</span> this;</span><br><span class="line">                    &#125;,</span><br><span class="line">                    <span class="keyword">then</span>: <span class="keyword">function</span> ( /* fnDone, fnFail, fnProgress */ ) &#123; //参数为 成功、失败、处理中的回调函数  返回的是promise</span><br><span class="line">                        var fns = arguments;</span><br><span class="line">                        <span class="built_in">return</span> jQuery.Deferred(<span class="keyword">function</span> (newDefer) &#123; //回调函数的参数是jQuery.Deferred新生成的Deffered对象</span><br><span class="line">                            jQuery.each(tuples, <span class="keyword">function</span> (i, tuple) &#123;</span><br><span class="line">                                var action = tuple[0],</span><br><span class="line">                                    fn = jQuery.isFunction(fns[i]) &amp;&amp; fns[i];</span><br><span class="line">                                // deferred[ <span class="keyword">done</span> | fail | progress ](...) <span class="keyword">for</span> forwarding actions to newDefer  新deffer对象的状态改变的相关操作作为回调函数添加到老deffer对象中，以此进行状态同步</span><br><span class="line">                                deferred[tuple[1]](<span class="function"><span class="title">function</span></span> () &#123; //defferred为老的Deffered对象 当老deffer对象已经resolve或者reject将直接执行此回调函数</span><br><span class="line">                                    var returned = fn &amp;&amp; fn.apply(this, arguments); //<span class="keyword">then</span>对应的回调函数的执行返回值,判断其是否是deffer对象或者promise对象</span><br><span class="line">                                    <span class="keyword">if</span> (returned &amp;&amp; jQuery.isFunction(returned.promise)) &#123;</span><br><span class="line">                                        returned.promise()</span><br><span class="line">                                            .<span class="keyword">done</span>(newDefer.resolve) //resolveList.add</span><br><span class="line">                                            .fail(newDefer.reject) //rejectList.add</span><br><span class="line">                                            .progress(newDefer.notify); //notifyList.add</span><br><span class="line">                                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                                        //newDefer[resolveWith|rejectWith|notifyWith](...)  新deffer与老deffer状态同步</span><br><span class="line">                                        newDefer[action + <span class="string">"With"</span>](this === promise ? newDefer.promise() : this, fn ? [returned] : arguments);</span><br><span class="line">                                    &#125;</span><br><span class="line">                                &#125;);</span><br><span class="line">                            &#125;);</span><br><span class="line">                            fns = null;</span><br><span class="line">                        &#125;).promise();</span><br><span class="line">                    &#125;,</span><br><span class="line">                    // Get a promise <span class="keyword">for</span> this deferred</span><br><span class="line">                    // If obj is provided, the promise aspect is added to the object 传参obj将会对其进行扩展promise的方法,如果不传参数将返回promise</span><br><span class="line">                    promise: <span class="keyword">function</span> (obj) &#123;</span><br><span class="line">                        <span class="built_in">return</span> obj != null ? jQuery.extend(obj, promise) : promise;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;,</span><br><span class="line">                deferred = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">            // Keep pipe <span class="keyword">for</span> back-compat</span><br><span class="line">            promise.pipe = promise.then;</span><br><span class="line"></span><br><span class="line">            // Add list-specific methods  变量tuples添加制定方法</span><br><span class="line">            jQuery.each(tuples, <span class="keyword">function</span> (i, tuple) &#123;</span><br><span class="line">                var list = tuple[2],</span><br><span class="line">                    //当前作用域的stateString值为: resolved | rejected | undefined</span><br><span class="line">                    stateString = tuple[3];</span><br><span class="line"></span><br><span class="line">                // promise[ <span class="keyword">done</span> | fail | progress ] = list.add  为promise添加<span class="keyword">done</span> fail progress方法</span><br><span class="line">                promise[tuple[1]] = list.add;</span><br><span class="line"></span><br><span class="line">                // Handle state</span><br><span class="line">                <span class="keyword">if</span> (stateString) &#123;</span><br><span class="line">                    //resolve的list添加state状态变更函数、添加rejectList的<span class="built_in">disable</span>函数、notify的list的lock</span><br><span class="line">                    //reject的list添加state状态变更函数、添加resolveList的<span class="built_in">disable</span>函数、notify的list的lock</span><br><span class="line">                    list.add(<span class="function"><span class="title">function</span></span> () &#123; //为resolveList和rejectedList添加状态更改、非自己的状态的锁定、notifyList的锁定</span><br><span class="line">                        // state = [ resolved | rejected ]</span><br><span class="line">                        state = stateString;</span><br><span class="line"></span><br><span class="line">                        // [ reject_list | resolve_list ].<span class="built_in">disable</span>; progress_list.lock  i^1这里主要用于0、1交换位置(0^1=1 1^1=0)</span><br><span class="line">                    &#125;, tuples[i ^ 1][2].<span class="built_in">disable</span>, tuples[2][2].lock);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                // deferred[ resolve | reject | notify ] 为defferred添加了resolve reject notify方法</span><br><span class="line">                deferred[tuple[0]] = <span class="function"><span class="title">function</span></span> () &#123;</span><br><span class="line">                    //调用 resolveWith |rejectWith| notifyWith</span><br><span class="line">                    deferred[tuple[0] + <span class="string">"With"</span>](this === deferred ? promise : this, arguments);</span><br><span class="line">                    <span class="built_in">return</span> this;</span><br><span class="line">                &#125;;</span><br><span class="line">                //为defferred[resolveWith |rejectWith| notifyWith] = list.fireWith(函数队列的fireWith)  参数为上下文，伪数组参数</span><br><span class="line">                deferred[tuple[0] + <span class="string">"With"</span>] = list.fireWith;</span><br><span class="line">            &#125;);</span><br><span class="line"></span><br><span class="line">            // Make the deferred a promise deffered浅拷贝promise的属性方法</span><br><span class="line">            promise.promise(deferred);</span><br><span class="line">            // Call given func <span class="keyword">if</span> any 如果传了回调函数 将把differ对象作为上下文和参数进行传递</span><br><span class="line">            <span class="keyword">if</span> (func) &#123;</span><br><span class="line">                func.call(deferred, deferred);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            // All <span class="keyword">done</span>!</span><br><span class="line">            <span class="built_in">return</span> deferred;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        
+          
+        
+        <div class="post-tags">
+          
+            <a href="/tags/jquery/" rel="tag"># jquery</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/06/04/jquery/Callbacks/" rel="next" title="Callbacks源码分析">
+                <i class="fa fa-chevron-left"></i> Callbacks源码分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/07/04/jquery/jquery/" rel="prev" title="jquery源码分析">
+                jquery源码分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="https://t1.picb.cc/uploads/2019/07/04/g48Kc1.jpg" alt="张生旺">
+            
+              <p class="site-author-name" itemprop="name">张生旺</p>
+              <div class="site-description motion-element" itemprop="description">前端技术分享</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">6</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">2</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#目的"><span class="nav-number">1.</span> <span class="nav-text">目的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参数、返回值"><span class="nav-number">2.</span> <span class="nav-text">参数、返回值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用方法"><span class="nav-number">3.</span> <span class="nav-text">使用方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行流程"><span class="nav-number">4.</span> <span class="nav-text">执行流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Deffered源码分析"><span class="nav-number">5.</span> <span class="nav-text">Deffered源码分析</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2017-2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">张生旺</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.2.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-nest@1/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.2.0"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.2.0"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script>
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+<script src="https://cdn.jsdelivr.net/npm/valine@1.3.9/dist/Valine.min.js"></script>
+
+<script>
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick,mail,link';
+  guest = guest.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'z7CKEWDK3P5IEepm9B2c3XND-gzGzoHsz',
+    appKey: '8F3D6isn3zxP3INnaasakgkv',
+    placeholder: '来都来了，不撩一句嘛~，留言记得在上面留下【邮箱】，方便收到回复通知~',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '15' || 10,
+    visitor: false,
+    lang: '' || 'zh-cn'
+  });
+</script>
+
+
+
+
+  
+
+
+  
+
+
+
+
+  
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $('.leancloud_visitors');
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+            Counter('put', '/classes/Counter/' + counter.objectId, JSON.stringify({ time: { '__op': 'Increment', 'amount': 1 } }))
+            
+              .done(function() {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.time + 1);
+              })
+            
+              .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+              })
+          } else {
+            
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1 }))
+                .done(function() {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function() {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+        .fail(function ({ responseJSON }) {
+          console.log('LeanCloud Counter Error: ' + responseJSON.code + ' ' + responseJSON.error);
+        });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + 'z7CKEWDK3P5IEepm9B2c3XND-gzGzoHsz')
+        .done(function({ api_server }) {
+          var Counter = function(method, url, data) {
+            return $.ajax({
+              method: method,
+              url: 'https://' + api_server + '/1.1' + url,
+              headers: {
+                'X-LC-Id': 'z7CKEWDK3P5IEepm9B2c3XND-gzGzoHsz',
+                'X-LC-Key': '8F3D6isn3zxP3INnaasakgkv',
+                'Content-Type': 'application/json',
+              },
+              data: data
+            });
+          };
+          
+            const localhost = /http:\/\/(localhost|127.0.0.1|0.0.0.0)/;
+            if (localhost.test(document.URL)) return;
+            addCount(Counter);
+          
+        });
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
